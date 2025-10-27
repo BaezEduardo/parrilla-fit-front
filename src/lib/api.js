@@ -1,37 +1,80 @@
-// Limpia posibles barras finales para evitar // en las URLs
-const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+// src/lib/api.js
+export const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/+$/,'') || "";
 
-// Si viene VITE_API_URL (prod), usamos https://api.tu-dominio.com/api
-// Si no (dev), usamos /api para que el proxy de Vite funcione.
-const BASE = API_URL ? `${API_URL}/api` : "/api";
-
-// Helper para manejar fetch + JSON y errores HTTP
-async function toJSON(promise) {
-  const res = await promise;
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status} ${res.statusText} ${text ? "- " + text : ""}`.trim());
-  }
-  return res.json();
+function adminHeaders() {
+  const k = localStorage.getItem("pf_admin_key") || "";
+  return k ? { "x-admin-key": k } : {};
 }
 
-// ---- Endpoints ----
-export function getMenu() {
-  return toJSON(fetch(`${BASE}/menu`, { credentials: "include" }));
+async function request(path, { method = "GET", headers = {}, body } = {}) {
+  const url = `${API_BASE}${path}`;
+  const opts = {
+    method,
+    headers: { "Content-Type": "application/json", ...headers },
+  };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+
+  const res = await fetch(url, opts);
+  const isJSON = (res.headers.get("content-type") || "").includes("application/json");
+  const data = isJSON ? await res.json() : await res.text();
+  if (!res.ok) throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+  return data;
 }
 
-// Ejemplos para cuando los necesites:
-// export function getData() {
-//   return toJSON(fetch(`${BASE}/data`, { credentials: "include" }));
-// }
-//
-// export function login(payload) {
-//   return toJSON(fetch(`${BASE}/auth/login`, {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify(payload),
-//     credentials: "include",
-//   }));
-// }
+export const api = {
+  // público
+  listDishes: (params = {}) => {
+    const q = new URLSearchParams({
+      available: "true",
+      ...(params.category ? { category: params.category } : {}),
+      ...(params.tag ? { tag: params.tag } : {}),
+      ...(params.q ? { q: params.q } : {}),
+      sortBy: "Name", sortDir: "asc",
+    }).toString();
+    return request(`/api/dishes${q ? `?${q}` : ""}`);
+  },
 
-export { BASE, API_URL };
+  adminListUsers: async ({ role, q, limit } = {}) => {
+    const qs = new URLSearchParams({
+      ...(role ? { role } : {}),
+      ...(q ? { q } : {}),
+      ...(limit ? { limit } : {}),
+    }).toString();
+    const url = `/api/users${qs ? `?${qs}` : ""}`;
+    const res = await fetch(`${API_BASE}${url}`, {
+      headers: {
+        "x-admin-key": import.meta.env.VITE_ADMIN_KEY || "clave-admin-local",
+      },
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || "Error listando usuarios");
+    return data;
+  },
+
+  adminDeleteUser: async (id) => {
+    const res = await fetch(`${API_BASE}/api/users/${id}`, {
+      method: "DELETE",
+      headers: {
+        "x-admin-key": import.meta.env.VITE_ADMIN_KEY || "clave-admin-local",
+      },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || "Error eliminando usuario");
+    return data;
+  },
+
+  // admin: platillos
+  adminListDishes: () => request(`/api/dishes`, { headers: adminHeaders() }), // trae todos
+  adminCreateDish: (fields) => request(`/api/dishes`, { method: "POST", headers: adminHeaders(), body: fields }),
+  adminUpdateDish: (id, fields) => request(`/api/dishes/${id}`, { method: "PATCH", headers: adminHeaders(), body: fields }),
+  adminDeleteDish: (id) => request(`/api/dishes/${id}`, { method: "DELETE", headers: adminHeaders() }),
+  adminAttachImageUrl: (id, imageUrl) =>
+    request(`/api/dishes/${id}/image`, { method: "POST", headers: adminHeaders(), body: { imageUrl } }),
+
+  // admin: usuarios
+  adminListUsers: (q="") => {
+    const qs = q ? `?q=${encodeURIComponent(q)}` : "";
+    return request(`/api/users${qs}`, { headers: adminHeaders() });
+  },
+  adminDeleteUser: (id) => request(`/api/users/${id}`, { method: "DELETE", headers: adminHeaders() }),
+};

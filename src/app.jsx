@@ -1,32 +1,51 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import Hero from "./components/Hero.jsx";
-import Section from "./components/Section.jsx";
-import { getMenu } from "./lib/api.js";
 import TopBar from "./components/TopBar.jsx";
 import ChatWidget from "./components/ChatWidget.jsx";
 import AuthModal from "./components/AuthModal.jsx";
 import ChangePasswordModal from "./components/ChangePasswordModal.jsx";
 import PreferencesModal from "./components/PreferencesModal.jsx";
+import DishCard from "./components/DishCard.jsx";
+import MenuFilters from "./components/MenuFilters.jsx";
+import { useDishes } from "./hooks/useDishes.js";
+import Skeleton from "./components/Skeleton.jsx";
+import "./styles.css";
+
+const ORDER = ["Entradas", "Platillos principales", "Postres", "Bebidas"];
 
 export default function App() {
-  //estados
+  // estados UI
   const [authOpen, setAuthOpen] = useState(false);
-  const [authMode, setAuthMode] = useState("login"); // "login" | "register"
-  const [menu, setMenu] = useState(null);
-  const [user, setUser] = useState(null); // placeholder auth
-  const [error, setError] = useState("");
+  const [authMode, setAuthMode] = useState("login");
+  const [user, setUser] = useState(null);
   const [pwdOpen, setPwdOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
 
+  // filtros
+  const [filters, setFilters] = useState({ category: undefined, q: "", tags: [] });
 
-  useEffect(() => {
-    getMenu()
-      .then(setMenu)
-      .catch(() => setError("No se pudo cargar el menú"));
-  }, []);
+  // el backend acepta un tag; usamos el primero si hay varios
+  const activeTag = filters.tags?.[0];
+
+  // datos
+  const { dishes, loading, error } = useDishes({
+    category: filters.category,
+    q: filters.q,
+    tag: activeTag,
+  });
+
+  const byCategory = useMemo(() => {
+    const map = new Map();
+    for (const d of dishes) {
+      const c = d.Category || "Otros";
+      if (!map.has(c)) map.set(c, []);
+      map.get(c).push(d);
+    }
+    return map;
+  }, [dishes]);
 
   if (error) return <div className="container error">{error}</div>;
-  if (!menu) return <div className="container">Cargando…</div>;
+  if (loading) return <div className="container"><Skeleton rows={6} /></div>;
 
   return (
     <>
@@ -34,16 +53,17 @@ export default function App() {
         user={user}
         onLoginClick={() => { setAuthMode("login"); setAuthOpen(true); }}
         onLogoutClick={() => setUser(null)}
-        onChangePasswordClick={() => setPwdOpen(true)} 
-        onPreferencesClick={() => setPrefsOpen(true)}  
+        onChangePasswordClick={() => setPwdOpen(true)}
+        onPreferencesClick={() => setPrefsOpen(true)}
       />
 
       <Hero
-        title={menu.hero.title}
-        subtitle={menu.hero.subtitle}
-        image={menu.hero.image}
+        title="La Parrilla Fit"
+        subtitle="Experimenta la excelencia culinaria con nuestro menú cuidadosamente elaborado"
+        image="/hero-r.jpg"
       />
-      {/* Intro Nuestro Menú (ya agregada) */}
+
+      {/* Intro Nuestro Menú */}
       <section className="menu-intro">
         <div className="container">
           <h2 className="menu-intro__title">Nuestro Menú</h2>
@@ -55,10 +75,25 @@ export default function App() {
         </div>
       </section>
 
+      {/* Filtros */}
+      <div className="container">
+        {/* <MenuFilters value={filters} onChange={setFilters} /> */}
+      </div>
+
       <main id="menu" className="container">
-        {menu.sections.map((s, i) => (
-          <Section key={i} name={s.name} items={s.items} />
+        {ORDER.filter(c => byCategory.has(c)).map((cat) => (
+          <section key={cat} className="menu__section">
+            <h2 className="menu__sectionTitle">{cat}</h2>
+            <div className="dish-grid">
+              {byCategory.get(cat).map((d) => (
+                <DishCard key={d.id} dish={d} />
+              ))}
+            </div>
+          </section>
         ))}
+        {!ORDER.some(c => byCategory.has(c)) && (
+          <p>No hay platillos disponibles.</p>
+        )}
         <p className="helper">¿Necesitas ayuda para elegir? Chatea con nuestro asistente.</p>
       </main>
 
@@ -69,7 +104,7 @@ export default function App() {
         onSwitchMode={setAuthMode}
         onLoggedIn={(u) => setUser(u)}
       />
-      
+
       <ChangePasswordModal
         open={pwdOpen}
         onClose={() => setPwdOpen(false)}

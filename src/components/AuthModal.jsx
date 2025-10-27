@@ -14,16 +14,24 @@ export default function AuthModal({
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
+  // limpiar al abrir / cambiar modo
   useEffect(() => {
     if (open) {
       setErr("");
       setLoading(false);
-      // limpia campos al abrir
       setPhone("");
       setPassword("");
       setName("");
     }
   }, [open, mode]);
+
+  // cerrar con ESC
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === "Escape") onClose?.(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -53,16 +61,18 @@ export default function AuthModal({
   }
 
   return (
-    <div className="modal">
-      <div className="modal__backdrop" onClick={onClose} />
-      <div className="modal__card">
-        <button className="modal__close" onClick={onClose}>✖</button>
+    <div className="modal__backdrop" onClick={onClose}>
+      {/* Evita cerrar si hacen click dentro */}
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <button className="modal__close" onClick={onClose} aria-label="Cerrar">✖</button>
 
         <h2 className="modal__title">
           La Parrilla <span className="accent">Fit</span>
         </h2>
         <p className="modal__subtitle">
-          {mode === "login" ? "¡Bienvenido de nuevo! Inicia sesión en tu cuenta" : "Crea tu cuenta para guardar tus preferencias"}
+          {mode === "login"
+            ? "¡Bienvenido de nuevo! Inicia sesión en tu cuenta"
+            : "Crea tu cuenta para guardar tus preferencias"}
         </p>
 
         <form onSubmit={submit} className="form">

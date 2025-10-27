@@ -1,4 +1,4 @@
-import heroDefault from "../assets/hero-restaurant.jpg";
+import heroDefault from "/hero-r.jpg";
 
 export default function Hero({ title, subtitle, image }) {
   const bg = image || heroDefault;

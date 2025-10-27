@@ -8,12 +8,21 @@ export default function ChangePasswordModal({ open, onClose, recordId }) {
   const [ok, setOk] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // reset al abrir
   useEffect(() => {
     if (open) {
       setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
       setErr(""); setOk(""); setLoading(false);
     }
   }, [open]);
+
+  // cerrar con ESC
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === "Escape") onClose?.(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -38,14 +47,15 @@ export default function ChangePasswordModal({ open, onClose, recordId }) {
   }
 
   return (
-    <div className="modal">
-      <div className="modal__backdrop" onClick={onClose} />
-      <div className="modal__card">
+    <div className="modal__backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
         <button className="modal__close" onClick={onClose}>✖</button>
+
         <div className="modal__header">
-            <h3 className="modal__heading">Cambiar Contraseña</h3>
-            <p className="modal__subheading">Ingresa tu contraseña actual y la nueva contraseña</p>
+          <h3 className="modal__heading">Cambiar Contraseña</h3>
+          <p className="modal__subheading">Ingresa tu contraseña actual y la nueva contraseña</p>
         </div>
+
         <form className="form" onSubmit={submit}>
           <label className="form__group">
             <span>Contraseña actual</span>
@@ -59,8 +69,10 @@ export default function ChangePasswordModal({ open, onClose, recordId }) {
             <span>Confirmar nueva contraseña</span>
             <input type="password" value={confirmPwd} onChange={e=>setConfirmPwd(e.target.value)} required />
           </label>
+
           {err && <div className="form__error">{err}</div>}
           {ok && <div className="form__ok">{ok}</div>}
+
           <button className="btn-primary full" disabled={loading}>
             {loading? "Guardando..." : "Guardar"}
           </button>
