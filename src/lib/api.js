@@ -1,80 +1,73 @@
 // src/lib/api.js
-export const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/+$/,'') || "";
 
-function adminHeaders() {
-  const k = localStorage.getItem("pf_admin_key") || "";
-  return k ? { "x-admin-key": k } : {};
-}
+// Siempre pegamos al backend vía el proxy de Vite en dev y mismo origen en prod
+const API = "/api";
 
-async function request(path, { method = "GET", headers = {}, body } = {}) {
-  const url = `${API_BASE}${path}`;
-  const opts = {
-    method,
-    headers: { "Content-Type": "application/json", ...headers },
-  };
-  if (body !== undefined) opts.body = JSON.stringify(body);
+// Helper JSON fetch con cookies
+async function jfetch(path, opts = {}) {
+  const res = await fetch(path.startsWith("http") ? path : `${API}${path}`, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(opts.headers || {}) },
+    ...opts,
+  });
 
-  const res = await fetch(url, opts);
-  const isJSON = (res.headers.get("content-type") || "").includes("application/json");
-  const data = isJSON ? await res.json() : await res.text();
-  if (!res.ok) throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+  if (res.status === 204) return null;
+
+  const ct = res.headers.get("content-type") || "";
+  const isJSON = ct.includes("application/json");
+  const data = isJSON ? await res.json().catch(() => null) : await res.text();
+
+  if (!res.ok) {
+    const msg = isJSON ? (data?.error || data?.message) : data;
+    throw new Error(msg || `HTTP ${res.status}`);
+  }
   return data;
 }
 
-export const api = {
-  // público
-  listDishes: (params = {}) => {
-    const q = new URLSearchParams({
-      available: "true",
-      ...(params.category ? { category: params.category } : {}),
-      ...(params.tag ? { tag: params.tag } : {}),
-      ...(params.q ? { q: params.q } : {}),
-      sortBy: "Name", sortDir: "asc",
-    }).toString();
-    return request(`/api/dishes${q ? `?${q}` : ""}`);
-  },
+/* ---------- AUTH ---------- */
+export const auth = {
+  me: () => jfetch(`/auth/me`),
 
-  adminListUsers: async ({ role, q, limit } = {}) => {
-    const qs = new URLSearchParams({
-      ...(role ? { role } : {}),
-      ...(q ? { q } : {}),
-      ...(limit ? { limit } : {}),
-    }).toString();
-    const url = `/api/users${qs ? `?${qs}` : ""}`;
-    const res = await fetch(`${API_BASE}${url}`, {
-      headers: {
-        "x-admin-key": import.meta.env.VITE_ADMIN_KEY || "clave-admin-local",
-      },
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || "Error listando usuarios");
-    return data;
-  },
+  login: ({ phone, password }) =>
+    jfetch(`/auth/login`, { method: "POST", body: JSON.stringify({ phone, password }) }),
 
-  adminDeleteUser: async (id) => {
-    const res = await fetch(`${API_BASE}/api/users/${id}`, {
-      method: "DELETE",
-      headers: {
-        "x-admin-key": import.meta.env.VITE_ADMIN_KEY || "clave-admin-local",
-      },
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data?.error || "Error eliminando usuario");
-    return data;
-  },
+  logout: () => jfetch(`/auth/logout`, { method: "POST" }),
 
-  // admin: platillos
-  adminListDishes: () => request(`/api/dishes`, { headers: adminHeaders() }), // trae todos
-  adminCreateDish: (fields) => request(`/api/dishes`, { method: "POST", headers: adminHeaders(), body: fields }),
-  adminUpdateDish: (id, fields) => request(`/api/dishes/${id}`, { method: "PATCH", headers: adminHeaders(), body: fields }),
-  adminDeleteDish: (id) => request(`/api/dishes/${id}`, { method: "DELETE", headers: adminHeaders() }),
-  adminAttachImageUrl: (id, imageUrl) =>
-    request(`/api/dishes/${id}/image`, { method: "POST", headers: adminHeaders(), body: { imageUrl } }),
+  changePassword: (payload) =>
+    jfetch(`/auth/password`, { method: "PUT", body: JSON.stringify(payload) }),
 
-  // admin: usuarios
-  adminListUsers: (q="") => {
-    const qs = q ? `?q=${encodeURIComponent(q)}` : "";
-    return request(`/api/users${qs}`, { headers: adminHeaders() });
+  deleteAccount: (payload) =>
+    jfetch(`/auth/me`, { method: "DELETE", body: JSON.stringify(payload) }),
+};
+
+/* ---------- PÚBLICO (platillos) ---------- */
+export const dishes = {
+  list: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v != null && v !== "")
+      )
+    ).toString();
+    return jfetch(`/dishes${qs ? `?${qs}` : ""}`);
   },
-  adminDeleteUser: (id) => request(`/api/users/${id}`, { method: "DELETE", headers: adminHeaders() }),
+};
+
+/* ---------- PREFERENCIAS (usuario actual) ---------- */
+export const prefs = {
+  getMe: () => jfetch(`/preferences/me`),
+  updateMe: (payload) => jfetch(`/preferences/me`, { method: "PUT", body: JSON.stringify(payload) }),
+};
+
+/* ---------- ADMIN ---------- */
+export const admin = {
+  listUsers: (params = {}) => {
+    const qs = new URLSearchParams(
+      Object.fromEntries(
+        Object.entries(params).filter(([, v]) => v != null && v !== "")
+      )
+    ).toString();
+    // Backend responde { items, count }
+    return jfetch(`/users${qs ? `?${qs}` : ""}`);
+  },
+  deleteUser: (id) => jfetch(`/users/${id}`, { method: "DELETE" }), // 204
 };

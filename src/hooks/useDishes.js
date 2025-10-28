@@ -1,22 +1,27 @@
 // src/hooks/useDishes.js
 import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { dishes } from "../lib/api"; // <-- usa el export nuevo
 
 export function useDishes({ category, tag, q } = {}) {
-  const [dishes, setDishes] = useState([]);
+  const [dishesData, setDishesData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     let alive = true;
     setLoading(true);
     setError("");
-    api.listDishes({ category, tag, q })
-      .then((data) => { if (alive) setDishes(data); })
-      .catch((e) => { if (alive) setError(e.message || "Error"); })
+
+    // creamos el objeto params
+    const params = { category, tag, q };
+
+    dishes.list(params)
+      .then((data) => { if (alive) setDishesData(data); })
+      .catch((e) => { if (alive) setError(e.message || "Error al cargar platillos"); })
       .finally(() => { if (alive) setLoading(false); });
+
     return () => { alive = false; };
   }, [category, tag, q]);
 
-  return { dishes, loading, error };
+  return { dishes: dishesData, loading, error };
 }

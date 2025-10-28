@@ -1,6 +1,6 @@
 // src/components/UsersTable.jsx
 import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { admin } from "../lib/api";
 
 export default function UsersTable() {
   const [users, setUsers] = useState([]);
@@ -8,15 +8,19 @@ export default function UsersTable() {
   const [role, setRole] = useState(""); // "", "user", "admin"
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [count, setCount] = useState(0);
 
   async function load() {
     try {
       setLoading(true);
       setErr("");
-      const data = await api.adminListUsers({ role: role || undefined, q });
-      setUsers(data);
+      const data = await admin.listUsers({ role: role || undefined, q });
+      // Backend devuelve { items, count }; soporta fallback por si es array
+      const items = Array.isArray(data) ? data : (data?.items || []);
+      setUsers(items);
+      setCount(Array.isArray(data) ? items.length : (data?.count ?? items.length));
     } catch (e) {
-      setErr(e.message);
+      setErr(e.message || "Error listando usuarios");
     } finally {
       setLoading(false);
     }
@@ -27,10 +31,10 @@ export default function UsersTable() {
   async function handleDelete(id) {
     if (!confirm("¿Eliminar este usuario? Esta acción es permanente.")) return;
     try {
-      await api.adminDeleteUser(id);
+      await admin.deleteUser(id);
       await load();
     } catch (e) {
-      alert(e.message);
+      alert(e.message || "Error eliminando usuario");
     }
   }
 
@@ -48,44 +52,52 @@ export default function UsersTable() {
           <option value="user">Solo user</option>
           <option value="admin">Solo admin</option>
         </select>
-        <button className="btn" onClick={load}>Buscar</button>
+        <button className="btn" onClick={load} disabled={loading}>
+          {loading ? "Buscando..." : "Buscar"}
+        </button>
       </div>
 
       {loading && <p className="admin__msg">Cargando usuarios…</p>}
       {err && <p className="admin__error">{err}</p>}
 
       {!loading && !err && (
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Teléfono</th>
-              <th>Rol</th>
-              <th>Likes</th>
-              <th>Allergies</th>
-              <th style={{width: 120}}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td>{u.Name}</td>
-                <td>{u.Phone}</td>
-                <td>{u.Role}</td>
-                <td>{u.Likes?.join(", ")}</td>
-                <td>{u.Allergies?.join(", ")}</td>
-                <td>
-                  <button className="btn btn--small btn--danger" onClick={() => handleDelete(u.id)}>
-                    Eliminar
-                  </button>
-                </td>
+        <>
+          <p style={{ opacity: .8, marginTop: 8 }}>Resultados: <b>{count}</b></p>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Teléfono</th>
+                <th>Rol</th>
+                <th>Likes</th>
+                <th>Allergies</th>
+                <th style={{ width: 120 }}>Acciones</th>
               </tr>
-            ))}
-            {users.length === 0 && (
-              <tr><td colSpan={6} style={{textAlign:"center"}}>Sin resultados</td></tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id}>
+                  <td>{u.Name}</td>
+                  <td>{u.Phone}</td>
+                  <td>{u.Role}</td>
+                  <td>{u.Likes?.join(", ")}</td>
+                  <td>{u.Allergies?.join(", ")}</td>
+                  <td>
+                    <button
+                      className="btn btn--small btn--danger"
+                      onClick={() => handleDelete(u.id)}
+                    >
+                      Eliminar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {users.length === 0 && (
+                <tr><td colSpan={6} style={{ textAlign: "center" }}>Sin resultados</td></tr>
+              )}
+            </tbody>
+          </table>
+        </>
       )}
     </section>
   );

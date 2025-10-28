@@ -723,22 +723,11 @@ button {
 }
 
 /* client/src/styles/dishes.css */
-.dish-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    /* 2 por fila */
-    gap: 16px;
-}
-
-@media (max-width: 640px) {
-    .dish-grid {
-        grid-template-columns: 1fr;
-    }
-
-    /* 1 en móvil */
-}
-
+/* ---- Dish card: imagen a la derecha en desktop, vertical en móvil ---- */
 .dish-card {
+    display: flex;
+    flex-direction: column;
+    /* móvil: uno debajo de otro */
     border: 1px solid #2a2a2a;
     border-radius: 12px;
     overflow: hidden;
@@ -754,6 +743,7 @@ button {
     box-shadow: 0 6px 16px rgba(212, 175, 55, 0.25);
 }
 
+/* Imagen del platillo */
 .dish-card__imgwrap {
     aspect-ratio: 4/3;
     overflow: hidden;
@@ -767,10 +757,41 @@ button {
     display: block;
 }
 
+/* Cuerpo con descripción */
 .dish-card__body {
     padding: 12px 14px;
 }
 
+/* Desktop: imagen a la derecha */
+@media (min-width: 768px) {
+    .dish-card {
+        flex-direction: row-reverse;
+        /* imagen a la derecha */
+        align-items: stretch;
+    }
+
+    .dish-card__imgwrap {
+        width: 42%;
+        min-width: 42%;
+        height: auto;
+        aspect-ratio: auto;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+        overflow: hidden;
+    }
+
+    .dish-card__body {
+        width: 58%;
+        padding: 16px 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+}
+
+/* Títulos y texto */
 .dish-card__title {
     margin: 0 0 6px;
     font-size: 1.05rem;
@@ -794,8 +815,10 @@ button {
 .dish-card__price {
     font-weight: 800;
     letter-spacing: .3px;
+    color: var(--accent);
 }
 
+/* Etiquetas pequeñas */
 .dish-tag {
     display: inline-block;
     font-size: .75rem;
@@ -806,15 +829,18 @@ button {
     background: #0f0f0f;
 }
 
+/* ---- Grid general de platillos ---- */
 .dish-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
+    /* 2 por fila */
     gap: 16px;
 }
 
 @media (max-width: 640px) {
     .dish-grid {
         grid-template-columns: 1fr;
+        /* 1 en móvil */
     }
 }
 .admin {

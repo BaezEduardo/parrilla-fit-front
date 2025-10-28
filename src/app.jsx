@@ -6,25 +6,26 @@ import AuthModal from "./components/AuthModal.jsx";
 import ChangePasswordModal from "./components/ChangePasswordModal.jsx";
 import PreferencesModal from "./components/PreferencesModal.jsx";
 import DishCard from "./components/DishCard.jsx";
-import MenuFilters from "./components/MenuFilters.jsx";
+// import MenuFilters from "./components/MenuFilters.jsx";
 import { useDishes } from "./hooks/useDishes.js";
 import Skeleton from "./components/Skeleton.jsx";
+import { useAuth } from "./context/AuthContext.jsx"; // 🔑 usar contexto
 import "./styles.css";
 
 const ORDER = ["Entradas", "Platillos principales", "Postres", "Bebidas"];
 
 export default function App() {
-  // estados UI
+  // 🔑 estados de UI (no de auth)
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState("login");
-  const [user, setUser] = useState(null);
   const [pwdOpen, setPwdOpen] = useState(false);
   const [prefsOpen, setPrefsOpen] = useState(false);
 
-  // filtros
-  const [filters, setFilters] = useState({ category: undefined, q: "", tags: [] });
+  // 🔑 auth desde el contexto (admin/user aquí se reflejan sin refresh)
+  const { user, logout } = useAuth();
 
-  // el backend acepta un tag; usamos el primero si hay varios
+  // filtros (si los usas luego)
+  const [filters, setFilters] = useState({ category: undefined, q: "", tags: [] });
   const activeTag = filters.tags?.[0];
 
   // datos
@@ -52,7 +53,7 @@ export default function App() {
       <TopBar
         user={user}
         onLoginClick={() => { setAuthMode("login"); setAuthOpen(true); }}
-        onLogoutClick={() => setUser(null)}
+        onLogoutClick={logout}                 // 🔑 cierra sesión real (cookie) + limpia contexto
         onChangePasswordClick={() => setPwdOpen(true)}
         onPreferencesClick={() => setPrefsOpen(true)}
       />
@@ -75,7 +76,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* Filtros */}
+      {/* Filtros (cuando los actives) */}
       <div className="container">
         {/* <MenuFilters value={filters} onChange={setFilters} /> */}
       </div>
@@ -97,24 +98,23 @@ export default function App() {
         <p className="helper">¿Necesitas ayuda para elegir? Chatea con nuestro asistente.</p>
       </main>
 
+      {/* 🔑 Auth modal no necesita setUser; el contexto se actualiza en su propio login */}
       <AuthModal
         open={authOpen}
         mode={authMode}
         onClose={() => setAuthOpen(false)}
         onSwitchMode={setAuthMode}
-        onLoggedIn={(u) => setUser(u)}
       />
 
+      {/* Estos modales ya no necesitan recordId: usan /me */}
       <ChangePasswordModal
         open={pwdOpen}
         onClose={() => setPwdOpen(false)}
-        recordId={user?.id}
       />
 
       <PreferencesModal
         open={prefsOpen}
         onClose={() => setPrefsOpen(false)}
-        recordId={user?.id}
       />
 
       <ChatWidget />

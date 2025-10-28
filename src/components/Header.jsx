@@ -1,30 +1,58 @@
+// src/components/Header.jsx
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
-import { useState } from "react";
 
 export default function Header({ onOpenLogin, onOpenPrefs }) {
-  const { user, setUser, isAdmin } = useAuth();
+  const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const ddRef = useRef(null);
+
+  // Cerrar dropdown con clic afuera o ESC
+  useEffect(() => {
+    if (!open) return;
+    const onClick = (e) => { if (ddRef.current && !ddRef.current.contains(e.target)) setOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("mousedown", onClick);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("mousedown", onClick);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const isAdmin = user?.role === "admin";
 
   return (
     <header className="site-header">
       <div className="container header-row">
-        <div />
+        <div className="brand">
+          <Link to="/" className="brand__link">La Parrilla <span className="accent">Fit</span></Link>
+        </div>
+
         <nav className="header-actions">
           {!user ? (
             <button className="btn" onClick={onOpenLogin}>Iniciar sesión</button>
           ) : (
-            <div className="profile">
-              <button className="btn" onClick={() => setOpen(v => !v)}>Perfil ▾</button>
+            <div className="profile" ref={ddRef}>
+              <button className="btn" onClick={() => setOpen(v => !v)}>
+                {user.name || "Perfil"} ▾
+              </button>
+
               {open && (
                 <div className="dropdown">
                   <div className="dropdown-item"><strong>{user.name}</strong></div>
                   <div className="dropdown-item">Tel: {user.phone}</div>
                   <hr/>
                   <button className="dropdown-item" onClick={onOpenPrefs}>Preferencias</button>
-                  {isAdmin && <div className="dropdown-item">Admin: gestión de menú</div>}
+                  {isAdmin && (
+                    <Link className="dropdown-item" to="/admin" onClick={() => setOpen(false)}>
+                      Panel de administración
+                    </Link>
+                  )}
                   <button
                     className="dropdown-item danger"
-                    onClick={() => { setUser(null); setOpen(false); }}
+                    onClick={() => { logout(); setOpen(false); }}
                   >
                     Cerrar sesión
                   </button>

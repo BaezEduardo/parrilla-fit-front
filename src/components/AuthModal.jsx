@@ -1,13 +1,14 @@
-// client/src/components/AuthModal.jsx
+// src/components/AuthModal.jsx
 import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function AuthModal({
   open,
   mode = "login",           // "login" | "register"
   onClose,
-  onLoggedIn,               // recibe el usuario {id,name,phone,role,...}
-  onSwitchMode
+  onSwitchMode,
 }) {
+  const { login } = useAuth(); // 🔑 usamos el contexto
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -35,23 +36,37 @@ export default function AuthModal({
 
   if (!open) return null;
 
+  function normalizePhone(p) {
+    return String(p || "").replace(/\D+/g, "");
+  }
+
   async function submit(e) {
     e.preventDefault();
     setErr("");
     setLoading(true);
     try {
-      const res = await fetch(`/api/auth/${mode === "login" ? "login" : "register"}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          mode === "login"
-            ? { phone, password }
-            : { name, phone, password }
-        )
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Error");
-      onLoggedIn?.(data);
+      const cleanPhone = normalizePhone(phone);
+
+      if (mode === "register") {
+        // Usamos la misma ruta pero con fetch manual porque el contexto solo implementa login.
+        const res = await fetch(`/api/auth/register`, {
+          method: "POST",
+          credentials: "include", // 🔑 guarda cookie pf_auth
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, phone: cleanPhone, password }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error || "No se pudo registrar");
+
+        // Después de registrar, el backend ya setea la cookie y regresa el usuario;
+        // opcionalmente forzamos sesión en el contexto con login (no necesario).
+        // Pero para consistencia, hacemos login explícito:
+        await login({ phone: cleanPhone, password });
+      } else {
+        // login normal vía contexto (usa credentials:"include")
+        await login({ phone: cleanPhone, password });
+      }
+
       onClose?.();
     } catch (e) {
       setErr(e.message || "No se pudo completar la acción");
@@ -97,6 +112,7 @@ export default function AuthModal({
               value={phone}
               onChange={e => setPhone(e.target.value)}
               placeholder="222-223-4567"
+              inputMode="numeric"
             />
           </label>
 
