@@ -1,5 +1,4 @@
-// src/context/AuthContext.jsx
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { auth } from "../lib/api";
 
 const AuthContext = createContext(null);
@@ -8,13 +7,12 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [booting, setBooting] = useState(true);
 
-  // Rehidrata sesión desde cookie (pf_auth)
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const u = await auth.me();
-        if (alive) setUser(u);
+        const me = await auth.me();
+        if (alive) setUser(me);
       } catch {
         if (alive) setUser(null);
       } finally {
@@ -24,26 +22,33 @@ export function AuthProvider({ children }) {
     return () => { alive = false; };
   }, []);
 
-  async function login({ phone, password }) {
-    const u = await auth.login({ phone, password }); // guarda cookie
-    setUser(u); // refleja login inmediatamente
-    return u;
+  async function login(payload) {
+    const me = await auth.login(payload);
+    setUser(me);
+    return me;
   }
 
   async function logout() {
-    try { await auth.logout(); } finally { setUser(null); }
+    try { await auth.logout(); } catch {}
+    setUser(null);
   }
 
-  return (
-    <AuthContext.Provider value={{ user, setUser, booting, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  async function refresh() {
+    const me = await auth.me();
+    setUser(me);
+    return me;
+  }
+
+  const value = useMemo(() => ({
+    user, booting, login, logout, refresh,
+    isAdmin: !!user && (user.role === "admin" || user.Role === "admin"),
+  }), [user, booting]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// 🔑 Named export que necesitas
-export function useAuth() {
+export function useAuthCtx() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth debe usarse dentro de <AuthProvider>");
+  if (!ctx) throw new Error("useAuthCtx debe usarse dentro de <AuthProvider>");
   return ctx;
 }

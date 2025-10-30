@@ -1,25 +1,24 @@
-import heroDefault from "/hero-r.jpg";
+import heroImg from "../assets/hero-r.jpg";
 
-export default function Hero({ title, subtitle, image }) {
-  const bg = image || heroDefault;
-
+export default function Hero() {
   return (
-    <section className="hero">
-      {/* Fondo con imagen */}
-      <div
-        className="hero__bg"
-        style={{ backgroundImage: `url(${bg})` }}
-      />
-      {/* Capa oscura encima */}
-      <div className="hero__overlay" />
-      {/* Contenido */}
-      <div className="hero__content">
+    <section
+      className="hero"
+      style={{
+        backgroundImage: `url(${heroImg})`,
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+      }}
+    >
+      <div className="hero-content">
         <h1>
           La Parrilla <span className="accent">Fit</span>
         </h1>
-        <p>{subtitle}</p>
-        <div className="rule" />
+        <p>Comida saludable, sabrosa y al punto 🔥</p>
       </div>
     </section>
   );
 }
+
+      

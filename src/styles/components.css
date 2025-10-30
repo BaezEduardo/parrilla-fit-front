@@ -1,0 +1,62 @@
+/* Grid 2 por fila desktop (1 en mobile) */
+.grid-2 {
+    display: grid;
+    gap: var(--gap);
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+    .grid-2 {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Card base + hover dorado */
+.card {
+    background: var(--surface);
+    border-radius: var(--radius-2xl);
+    border: 1px solid #2a2a2a;
+    padding: 16px;
+    transition: box-shadow .2s ease, transform .1s ease, border-color .2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0 0 2px var(--gold);
+    border-color: var(--gold);
+}
+
+/* Inputs básicos */
+.input,
+.select,
+.checkbox {
+    font: inherit;
+    color: var(--text);
+}
+
+/* Botón base */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: var(--radius-2xl);
+    border: 1px solid #2a2a2a;
+    background: var(--surface);
+    cursor: pointer;
+    transition: box-shadow .2s ease, border-color .2s ease, transform .1s ease;
+}
+
+.btn:hover {
+    box-shadow: 0 0 0 2px var(--gold);
+    border-color: var(--gold);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn[disabled] {
+    opacity: .6;
+    cursor: not-allowed;
+}
