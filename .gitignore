@@ -37,31 +37,5 @@ coverage/
 # === Sistemas Operativos ===
 # macOS
 .DS_Store
-.AppleDouble
-.LSOverride
-
-# Windows
 Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# === Editores ===
 .vscode/
-.idea/
-*.swp
-*.swo
-
-# === Logs genéricos ===
-*.log
-logs/
-*.pid
-*.seed
-*.pid.lock
-
-# === Archivos temporales comunes ===
-*.orig
-*.rej
-
-# === Producción en hosts (si los usas) ===
-.vercel/
-.netlify/
