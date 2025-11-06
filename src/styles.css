@@ -774,3 +774,249 @@ body {
     border-color: rgba(242, 182, 54, .5);
     background: rgba(242, 182, 54, .12)
 }
+
+.admin__search {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin: 6px 0 12px;
+}
+
+.admin__search .search {
+    flex: 1;
+    background: #202020;
+    border: 1px solid #2a2a2a;
+    color: #eaeaea;
+    border-radius: 10px;
+    padding: 10px 12px;
+    outline: none;
+}
+
+.admin__search .search:focus {
+    border-color: rgba(242, 182, 54, .5);
+    box-shadow: 0 0 0 2px rgba(242, 182, 54, .15);
+}
+
+.logo-link {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 700;
+    transition: color 0.2s ease;
+}
+
+.logo-link:hover {
+    color: var(--accent);
+}
+
+/* FAB */
+.chat-fab {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .4);
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 60;
+}
+
+.chat-fab:hover {
+    filter: brightness(1.05);
+}
+
+/* Panel */
+/* FAB más grande y amarillo */
+.chat-fab {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    width: 68px;
+    height: 68px;
+    /* ↑ tamaño */
+    border-radius: 50%;
+    background: var(--accent);
+    /* amarillo */
+    color: #000;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .45);
+    font-size: 30px;
+    /* ↑ icono */
+    cursor: pointer;
+    z-index: 60;
+}
+
+.chat-fab:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+}
+
+/* Panel más grande */
+.chat-panel {
+    position: fixed;
+    right: 22px;
+    bottom: 100px;
+    width: min(420px, 94vw);
+    /* ↑ ancho */
+    height: 520px;
+    /* ↑ alto */
+    background: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .5);
+    display: flex;
+    flex-direction: column;
+    z-index: 60;
+}
+
+/* Header centrado (“Chefin”) y botón cerrar fijo a la derecha */
+.chat-header {
+    position: relative;
+    padding: 12px 44px;
+    /* deja espacio al botón */
+    border-bottom: 1px solid #242424;
+    text-align: center;
+    /* centra el texto */
+}
+
+.chat-title {
+    font-weight: 800;
+    font-size: 1.05rem;
+}
+
+.chat-sub {
+    font-size: .85rem;
+    opacity: .85;
+}
+
+.chat-header .btn.icon {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+}
+
+/* Área de mensajes más amplia */
+.chat-list {
+    flex: 1;
+    overflow: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Input: botón más pequeño y fijo, textarea ocupa el resto */
+.chat-input {
+    border-top: 1px solid #242424;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.chat-input textarea {
+    flex: 1 1 auto;
+    /* ocupa más espacio */
+    resize: none;
+    border-radius: 10px;
+    background: #1d1d1d;
+    border: 1px solid #2a2a2a;
+    color: #eee;
+    padding: 10px 12px;
+}
+
+.chat-input .btn.primary {
+    flex: 0 0 120px;
+    /* ↓ ancho del botón */
+    padding: 10px 8px;
+}
+
+/* =======================
+   FOOTER
+======================= */
+.footer {
+    background: #0e0e0e;
+    color: #ddd;
+    padding: 2.5rem 1rem 1rem;
+    margin-top: 4rem;
+    border-top: 1px solid #2a2a2a;
+}
+
+.footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.footer-brand h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.footer-brand h3 span {
+    color: var(--accent, #f7b500);
+}
+
+.footer-brand p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.footer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.footer-links a {
+    color: #ccc;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.footer-links a:hover {
+    color: var(--accent, #f7b500);
+}
+
+.footer-social {
+    display: flex;
+    gap: 1rem;
+    font-size: 1.4rem;
+}
+
+.footer-social a {
+    color: var(--accent, #f7b500);
+    transition: transform 0.2s, filter 0.2s;
+}
+
+.footer-social a:hover {
+    transform: scale(1.15);
+    filter: brightness(1.2);
+}
+
+.footer-bottom {
+    text-align: center;
+    margin-top: 2rem;
+    border-top: 1px solid #2a2a2a;
+    padding-top: 1rem;
+    font-size: 0.85rem;
+    color: #999;
+}
+
+@media (max-width: 768px) {
+    .footer-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}

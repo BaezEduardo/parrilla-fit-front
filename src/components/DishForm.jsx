@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const CATEGORIES = ["Entradas","Platos Principales","Postres","Bebidas"];
+const CATEGORIES = ["Entradas","Platillos principales","Postres","Bebidas"];
 
 export default function DishForm({ open, onClose, onSave, initial }) {
   const [name, setName] = useState("");
@@ -55,7 +55,7 @@ export default function DishForm({ open, onClose, onSave, initial }) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e)=>e.stopPropagation()}>
         <div className="modal__header">
-          <h3>{initial ? "Editar" : "Agregar"} <span className="accent">Platillo</span></h3>
+          <h3>{initial ? "Editar" : "Agregar"} <span>Platillo</span></h3>
           <button className="btn icon" onClick={onClose}>✕</button>
         </div>
 

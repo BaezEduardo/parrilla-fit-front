@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import Hero from "../components/Hero";
 
-const ORDER = ["Entradas", "Platos Principales", "Postres", "Bebidas"];
+const ORDER = ["Entradas", "Platillos Principales", "Postres", "Bebidas"];
 
 function normalizeCategory(raw) {
   const t = (raw || "").toLowerCase();
   if (t.startsWith("entrada")) return "Entradas";
-  if (t.includes("principal")) return "Platos Principales";
+  if (t.includes("principal")) return "Platillos Principales";
   if (t.startsWith("postre")) return "Postres";
   if (t.startsWith("bebida")) return "Bebidas";
   return "Otros";

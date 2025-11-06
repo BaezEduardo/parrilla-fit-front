@@ -50,3 +50,11 @@ export const users = {
   remove: (id) => jfetch(`/users/${id}`, { method: "DELETE" }),
   setRole: (id, role) => jfetch(`/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) }),
 };
+
+/* ---------- AI CHAT ---------- */
+export const ai = {
+  chat: (payload) => jfetch(`/ai/chat`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }),
+};

@@ -3,7 +3,9 @@ import Topbar from "./components/Topbar";
 import Menu from "./pages/Menu";
 import AdminPanel from "./pages/AdminPanel";
 import RequireAdmin from "./routes/RequireAdmin";
+import ChatBubble from "./components/ChatBubble";
 import "./styles.css";
+import Footer from "./components/Footer";
 
 export default function App(){
   return (
@@ -22,6 +24,8 @@ export default function App(){
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <ChatBubble dishes={[]} />
+      <Footer />
     </>
   );
 }

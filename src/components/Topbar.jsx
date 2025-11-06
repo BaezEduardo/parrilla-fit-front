@@ -5,6 +5,7 @@ import AuthModal from "./AuthModal";
 import ProfileMenu from "./ProfileMenu";
 import ChangePasswordModal from "./ChangePasswordModal";
 import PreferencesModal from "./PreferencesModal";
+import { Link } from "react-router-dom";
 
 export default function Topbar() {
   const { user } = useAuth();
@@ -16,8 +17,12 @@ export default function Topbar() {
   return (
     <>
       <header className="topbar">
-        <div className="topbar__brand">La Parrilla <span>Fit</span></div>
-
+        
+        <div className="logo">
+          <Link to="/" className="logo-link">
+            La Parrilla <span className="accent">Fit</span>
+          </Link>
+        </div>
         <div className="topbar__actions">
           {user?.role === "admin" && (
             <button className="btn ghost" onClick={() => navigate("/admin")}>Admin</button>
