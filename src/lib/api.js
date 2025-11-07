@@ -1,4 +1,6 @@
-const API = "/api";
+const API = import.meta.env.PROD
+  ? (import.meta.env.VITE_API_URL || "/api")
+  : "/api";
 
 // Helper JSON fetch con cookies
 async function jfetch(path, opts = {}) {
