@@ -14,6 +14,26 @@ function normalizeCategory(raw) {
   return "Otros";
 }
 
+/* ---------- Helpers de normalización ---------- */
+function toBool(v) {
+  return (
+    v === true ||
+    v === 1 ||
+    v === "1" ||
+    (typeof v === "string" && v.toLowerCase() === "true")
+  );
+}
+
+function normalizeDish(d) {
+  // disponible puede venir en 'available' o 'Available'
+  const availableRaw = d.available ?? d.Available;
+  return {
+    ...d,
+    _available: toBool(availableRaw), // boolean unificado para filtrar
+    _category: normalizeCategory(d.category || d.Category || d.tipo || d.Tipo),
+  };
+}
+
 export default function Menu() {
   const [dishes, setDishes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,22 +42,24 @@ export default function Menu() {
   useEffect(() => {
     (async () => {
       try {
-        // ✅ Ahora usamos apiDishes.list() que ya usa jfetch (con API base correcta)
         const data = await apiDishes.list();
 
         console.clear();
         console.log("Dishes raw ->", data);
-        console.log("Primer registro ->", Array.isArray(data?.records) ? data.records[0] : data?.[0]);
+        console.log(
+          "Primer registro ->",
+          Array.isArray(data?.records) ? data.records[0] : data?.[0]
+        );
 
+        let flat = [];
         // Soporta respuesta cruda de Airtable o ya aplanada
         if (Array.isArray(data?.records)) {
-          const flat = data.records.map((r) => ({ id: r.id, ...(r.fields || {}) }));
-          setDishes(flat);
+          flat = data.records.map((r) => ({ id: r.id, ...(r.fields || {}) }));
         } else if (Array.isArray(data)) {
-          setDishes(data);
-        } else {
-          setDishes([]);
+          flat = data;
         }
+        // normalizamos cada platillo y guardamos
+        setDishes(flat.map(normalizeDish));
       } catch (e) {
         setErr(e.message || "Error cargando menú");
       } finally {
@@ -48,8 +70,10 @@ export default function Menu() {
 
   const grouped = useMemo(() => {
     const g = {};
-    for (const d of dishes) {
-      const cat = normalizeCategory(d.category || d.Category || d.tipo || d.Tipo);
+    // Solo mostramos disponibles en la página pública
+    const visibles = dishes.filter((d) => d._available);
+    for (const d of visibles) {
+      const cat = d._category;
       (g[cat] ||= []).push(d);
     }
     return g;
@@ -77,6 +101,20 @@ export default function Menu() {
             </section>
           ) : null
         )}
+        {/* Renderiza "Otros" al final si existen */}
+        {grouped["Otros"]?.length ? (
+          <section key="Otros" style={{ marginBottom: 28 }}>
+            <h2>Otros</h2>
+            <div className="grid-plates">
+              {grouped["Otros"].map((dish) => (
+                <DishCard
+                  key={dish.id || dish.recordId || dish._id || dish.Name}
+                  dish={dish}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
       </main>
     </>
   );
@@ -87,8 +125,8 @@ function DishCard({ dish }) {
   const desc = dish.Description || dish.description || "";
   const price = dish.Price ?? dish.price ?? "";
   const img =
-    (dish.Image?.[0]?.thumbnails?.large?.url) ||
-    (dish.Image?.[0]?.url) ||
+    dish.Image?.[0]?.thumbnails?.large?.url ||
+    dish.Image?.[0]?.url ||
     dish.imageUrl ||
     "";
 
@@ -97,7 +135,7 @@ function DishCard({ dish }) {
       <div className="dish-card__info">
         <div className="dish-card__header">
           <h3 className="dish-card__name">
-            {name} -{" "}
+            {name}{" "}
             <span className="dish-card__price">
               ${Number(price).toFixed(2)}
             </span>
