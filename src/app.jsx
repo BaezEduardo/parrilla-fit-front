@@ -1,15 +1,30 @@
-import { Outlet } from "react-router-dom";
-import Topbar from "./components/layout/Topbar";
-import ChatBubble from "./components/chat/ChatBubble";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Topbar from "./components/Topbar";
+import Menu from "./pages/Menu";
+import AdminPanel from "./pages/AdminPanel";
+import RequireAdmin from "./routes/RequireAdmin";
+import ChatBubble from "./components/ChatBubble";
+import "./styles.css";
+import Footer from "./components/Footer";
 
-export default function App() {
+export default function App(){
   return (
-    <div style={{ minHeight: "100dvh", display: "grid", gridTemplateRows: "auto 1fr" }}>
+    <>
       <Topbar />
-      <main>
-        <Outlet />
-      </main>
-      <ChatBubble />
-    </div>
+      <Routes>
+        <Route path="/" element={<Menu />} />
+        <Route
+          path="/admin"
+          element={
+            <RequireAdmin>
+              <AdminPanel />
+            </RequireAdmin>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <ChatBubble dishes={[]} />
+      <Footer />
+    </>
   );
 }
