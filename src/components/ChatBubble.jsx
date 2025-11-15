@@ -17,57 +17,74 @@ export default function ChatBubble({ dishes = [] }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
-  const [msgs, setMsgs] = useState(() => ([
+  const [msgs, setMsgs] = useState(() => [
     {
       role: "assistant",
-      content: user
-        ? `¡Hola ${user.name || ""}! Soy tu asistente. Puedo recomendarte platillos según tus **preferencias** (me gusta/no me gusta y alergias). ¿Qué se te antoja hoy?`
-        : `¡Hola! Puedo recomendarte platillos por **ingredientes** o **restricciones** (ej. “sin gluten”). Si creas una cuenta, podré personalizar aún más según tus preferencias. ¿Qué se te antoja hoy?`,
+      content:
+        "¡Hola! Soy Chefin, asistente del menú de **La Parrilla Fit**. Solo respondo dudas y recomendaciones sobre los platillos del menú. ¿Qué se te antoja hoy?",
     },
-  ]));
+  ]);
   const [loading, setLoading] = useState(false);
   const listRef = useAutoScroll(msgs);
 
-  // Construimos un “contexto de menú” compacto para el prompt
-  const menuContext = useMemo(() => {
-    return dishes.map(d => ({
-      name: d.Name ?? d.name,
-      price: d.Price ?? d.price,
-      cat: d.Category ?? d.category,
-      desc: d.Description ?? d.description,
-      ingredients: d.Ingredients ?? d.ingredients ?? null, // por si llegas a tener este campo
-    })).slice(0, 50); // límite defensivo
-  }, [dishes]);
+  // Contexto de menú compacto que se envía a n8n
+  const menuContext = useMemo(
+    () =>
+      dishes
+        .map((d) => ({
+          name: d.Name ?? d.name,
+          price: d.Price ?? d.price,
+          cat: d.Category ?? d.category,
+          desc: d.Description ?? d.description,
+          ingredients: d.Ingredients ?? d.ingredients ?? null,
+        }))
+        .slice(0, 50),
+    [dishes]
+  );
 
   async function send() {
     const text = input.trim();
     if (!text) return;
+
     setInput("");
-    setMsgs(m => [...m, { role: "user", content: text }]);
+    setMsgs((m) => [...m, { role: "user", content: text }]);
     setLoading(true);
+
     try {
       const res = await ai.chat({
         query: text,
-        user: user ? {
-          id: user.id,
-          name: user.name,
-          phone: user.phone,
-          role: user.role,
-          likes: user.likes || [],
-          dislikes: user.dislikes || [],
-          allergies: user.allergies || [],
-        } : null,
+        user: user
+          ? {
+              id: user.id,
+              name: user.name,
+              phone: user.phone,
+              role: user.role,
+              likes: user.likes || [],
+              dislikes: user.dislikes || [],
+              allergies: user.allergies || [],
+            }
+          : null,
         menu: menuContext,
       });
-      setMsgs(m => [...m, { role: "assistant", content: res?.answer || "…" }]);
+
+      setMsgs((m) => [
+        ...m,
+        { role: "assistant", content: res?.answer || "…" },
+      ]);
     } catch (e) {
-      setMsgs(m => [...m, { role: "assistant", content: e.message || "No pude responder ahora." }]);
+      setMsgs((m) => [
+        ...m,
+        {
+          role: "assistant",
+          content: e.message || "No pude responder ahora.",
+        },
+      ]);
     } finally {
       setLoading(false);
     }
   }
 
-  function onKey(e){
+  function onKey(e) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       send();
@@ -79,7 +96,7 @@ export default function ChatBubble({ dishes = [] }) {
       {/* Botón flotante */}
       <button
         className="chat-fab"
-        onClick={() => setOpen(v => !v)}
+        onClick={() => setOpen((v) => !v)}
         aria-label="Abrir chat"
         title="Recomendaciones"
       >
@@ -92,16 +109,25 @@ export default function ChatBubble({ dishes = [] }) {
             <div>
               <strong>Chefin</strong>
               <div className="chat-sub">
-                {user ? "Recomendaciones basadas en tus preferencias" : "Puedes crear cuenta para recomendaciones personalizadas"}
+                Solo respondo dudas sobre el menú de La Parrilla Fit
               </div>
             </div>
-            <button className="btn icon" onClick={() => setOpen(false)} aria-label="Cerrar">✕</button>
+            <button
+              className="btn icon"
+              onClick={() => setOpen(false)}
+              aria-label="Cerrar"
+            >
+              ✕
+            </button>
           </div>
 
           <div className="chat-list" ref={listRef}>
             {msgs.map((m, i) => (
               <div key={i} className={`msg ${m.role}`}>
-                <div className="bubble" dangerouslySetInnerHTML={{ __html: mdSafe(m.content) }} />
+                <div
+                  className="bubble"
+                  dangerouslySetInnerHTML={{ __html: mdSafe(m.content) }}
+                />
               </div>
             ))}
             {loading && (
@@ -114,12 +140,16 @@ export default function ChatBubble({ dishes = [] }) {
           <div className="chat-input">
             <textarea
               value={input}
-              onChange={(e)=>setInput(e.target.value)}
+              onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKey}
               rows={2}
-              placeholder={user ? "¿Qué tienes ganas de comer?" : "Di un ingrediente o preferencia (ej. sin gluten)…"}
+              placeholder="Hazme una pregunta sobre el menú…"
             />
-            <button className="btn primary" onClick={send} disabled={loading || !input.trim()}>
+            <button
+              className="btn primary"
+              onClick={send}
+              disabled={loading || !input.trim()}
+            >
               Enviar
             </button>
           </div>
@@ -130,7 +160,7 @@ export default function ChatBubble({ dishes = [] }) {
 }
 
 // Sanitiza muy básico (negritas y saltos); si ya usas un MD renderer, cámbialo.
-function mdSafe(s=""){
+function mdSafe(s = "") {
   return String(s)
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
     .replace(/\n/g, "<br/>");

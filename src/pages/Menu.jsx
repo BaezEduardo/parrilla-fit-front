@@ -45,12 +45,12 @@ export default function Menu() {
       try {
         const data = await apiDishes.list();
 
-        console.clear();
-        console.log("Dishes raw ->", data);
-        console.log(
-          "Primer registro ->",
-          Array.isArray(data?.records) ? data.records[0] : data?.[0]
-        );
+        //console.clear();
+        //console.log("Dishes raw ->", data);
+        //console.log(
+        //  "Primer registro ->",
+        //  Array.isArray(data?.records) ? data.records[0] : data?.[0]
+        //);
 
         let flat = [];
         // Soporta respuesta cruda de Airtable o ya aplanada
@@ -101,6 +101,13 @@ export default function Menu() {
     <>
       <Hero />
       <main className="container">
+      {/* Si no hay platillos disponibles */}
+      {visibles.length === 0 && (
+        <div style={{ textAlign: "center", marginTop: 40, opacity: 0.8 }}>
+          <h2>No hay platillos disponibles en este momento</h2>
+          <p>Por favor vuelve más tarde.</p>
+        </div>
+      )}
         {ORDER.map((cat) =>
           grouped[cat]?.length ? (
             <section key={cat} style={{ marginBottom: 28 }}>
