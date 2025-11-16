@@ -1,12 +1,10 @@
-// api.js
+// src/lib/api.js
 const RUNTIME_API =
   typeof window !== "undefined" && window.__API_BASE__ || null;
 
-const API = RUNTIME_API || (
-  import.meta.env.PROD
-    ? (import.meta.env.VITE_API_URL || "/api")
-    : "/api"
-);
+const API = import.meta.env.PROD
+  ? (RUNTIME_API || import.meta.env.VITE_API_URL || "/api")
+  : "/api"; 
 
 if (import.meta.env.PROD) console.log("API base:", API);
 

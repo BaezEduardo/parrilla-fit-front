@@ -2,7 +2,8 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-const API_TARGET = "https://api.parrillafit.castelancarpinteyro.com";
+//const API_TARGET = "https://api.parrillafit.castelancarpinteyro.com";
+const API_TARGET = "http://localhost:3000"; // desarrollo
 
 export default defineConfig({
   plugins: [react()],

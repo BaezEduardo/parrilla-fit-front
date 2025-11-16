@@ -1,3 +1,4 @@
+// components/ChatBubble.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ai } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
@@ -47,6 +48,7 @@ export default function ChatBubble({ dishes = [] }) {
     if (!text) return;
 
     setInput("");
+    // agregamos el mensaje del usuario al chat
     setMsgs((m) => [...m, { role: "user", content: text }]);
     setLoading(true);
 
@@ -67,10 +69,39 @@ export default function ChatBubble({ dishes = [] }) {
         menu: menuContext,
       });
 
-      setMsgs((m) => [
-        ...m,
-        { role: "assistant", content: res?.answer || "…" },
-      ]);
+      // el backend devuelve { answer, status, message, recommendations, ... }
+      const baseText = res?.answer || res?.message || "…";
+
+      // construimos texto con las recomendaciones, si existen
+      let recText = "";
+      if (Array.isArray(res?.recommendations) && res.recommendations.length > 0) {
+        const lines = res.recommendations.map((r, idx) => {
+          const tags =
+            Array.isArray(r.tags) && r.tags.length
+              ? ` (${r.tags.join(", ")})`
+              : "";
+          const reason = r.reason ? ` — ${r.reason}` : "";
+          return `${idx + 1}. **${r.name}**${tags}${reason}`;
+        });
+
+        recText = "\n\n**Recomendaciones:**\n" + lines.join("\n");
+      }
+
+      const fullText = baseText + recText;
+
+      // armamos todos los mensajes nuevos del bot en un solo setMsgs
+      setMsgs((m) => {
+        const next = [...m, { role: "assistant", content: fullText }];
+        if (res?.followUpQuestion) {
+          next.push({
+            role: "assistant",
+            content: res.followUpQuestion,
+          });
+        }
+        return next;
+      });
+
+      console.log("Respuesta AI:", res);
     } catch (e) {
       setMsgs((m) => [
         ...m,
